@@ -11,3 +11,16 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+#page-wrap {
+  padding-top: 100px;
+  padding-left: 100px;
+  }
+
+#outer-container {
+  position: relative;
+  width: 100%; /* Adjust the width according to your design */
+  height: 100%; /* You may need to set a height as well */
+  float: left;
+}
+  
