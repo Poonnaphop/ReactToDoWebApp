@@ -24,7 +24,13 @@ import axios from "axios";
 import { Http } from "@material-ui/icons";
 import { useCookies } from 'react-cookie';
 
-import DateTimePicker from 'react-datetime-picker';
+import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import format from "date-fns/format";
+import parse from "date-fns/parse";
+import dayjs from 'dayjs';
 
 function Main() {
   const url = 'http://localhost:5101/activities'
@@ -56,61 +62,52 @@ function Main() {
   }
   const [columns, setColumns] = useState([
     { title: 'Name', field: 'name' },
-    { title: 'Time', field: 'time', initialEditValue: 'initial edit value' },
+    {
+      title: "Time",
+      field: "time",
+      render: (rowData) => (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DateTimePicker
+            label="activity time"
+            value={dayjs(rowData.time)}
+            onChange={(newTime) => handleDateTimeChange(rowData, newTime)}
+            rowData={rowData}
+          />
+        </LocalizationProvider>
+      ),
+      editComponent: ({ value, onChange }) => (
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DateTimePicker
+            label="new activity time"
+            value={dayjs(value)} // Ensure you are using the correct property
+            onChange={onChange}
+          />
+        </LocalizationProvider>
+      ),
+    },
     { title: "ID", field: "id" }
   ]);
   const [data, setData] = useState([
+    /*
     { name: 'Mehmet', time: 'Baran', id: 1987 },
     { name: 'Zerya Betül', time: 'Baran', id: 2017 }
+    */
   ])
   const defaultMaterialTheme = createTheme()
 
-
-  function handleAddActivity() {
-    if (newActivityText.trim() !== "") {
-      setActivities([...activities, newActivityText]);
-      setNewActivityText("");
-    }
-  }
-
-  function get() {
-    axios.get(
-      url,
-      {
-        headers: { Authorization: `Bearer ${cookies['token']}` }
-        , timeout: 10 * 1000
+  const handleDateTimeChange = (rowData, newTime) => {
+    // Create a new array with the updated time for the edited row
+    const updatedData = data.map((row) => {
+      if (row.id === rowData.id) {
+        return { ...row, time: newTime.toISOString() };
       }
-    ).then((response) => {
-      setData(response.data)
-    }).catch((error) => {
-      if (error.code === "ECONNABORTED") {
-        console.log("time out")
-      } else {
-        console.log(error.response)
-      }
-    })
-  }
+      return row;
+    });
 
-  function handleDeleteActivity(index) {
-    const updatedActivities = [...activities];
-    updatedActivities.splice(index, 1);
-    setActivities(updatedActivities);
-  }
+    // Update the data state with the new array
+    setData(updatedData);
+  };
 
-  function handleEditActivity(index) {
-    setEditingIndex(index);
-    setEditedActivityText(activities[index]); // Set the input text to the current activity
-  }
-
-  function handleSaveActivity(index) {
-    if (editedActivityText.trim() !== "") { // Use editedActivityText, not newActivityText
-      const updatedActivities = [...activities];
-      updatedActivities[index] = editedActivityText;
-      setActivities(updatedActivities);
-      setEditingIndex(null);
-      setEditedActivityText(""); // Clear the edited text field
-    }
-  }
 
   useEffect(() => {
     console.log("cookies" + cookies['token'])
@@ -133,6 +130,7 @@ function Main() {
 
   return (
     <div id='outer-container'>
+
       <SideBar pageWrapId={'page-wrap'} outerContainerId={'outer-container'} />
       <div id='page-wrap' style={{ width: '80%', height: '100%' }}>
         <ThemeProvider theme={defaultMaterialTheme}>
@@ -169,57 +167,107 @@ function Main() {
                 }),
               onRowAddCancelled: rowData => console.log('Row adding cancelled'),
               onRowUpdateCancelled: rowData => console.log('Row editing cancelled'),
-              onRowAdd: newData =>
-                new Promise((resolve, reject) => {
-                  setTimeout(() => {
-                    setData([...data, newData]);
-                    axios.post(
-                      url,
-                      {
-                        name: newData.name,
-                        when: newData.time,
-                      },
-                      {
-                        headers: { Authorization: `Bearer ${cookies["token"]}` },
-                        timeout: 10 * 1000,
-                      }
-                    ).then((response) => {
-                      setData(response.data)
-                    }).catch((error) => {
-                      if (error.code === "ECONNABORTED") {
-                        console.log("time out")
-                      } else {
-                        console.log(error.response)
-                      }
-                    })
 
-                    resolve();
-                  }, 1000);
-                }),
+              onRowAdd: (newData) =>
+                new Promise((resolve, reject) => {
+                  // Simulate a delay with setTimeout
+                  setTimeout(() => {
+                    // Send a POST request to add new data
+                    axios.post(
+                        url,
+                        {
+                          name: newData.name,
+                          when: dayjs(newData.time),
+                        },
+                        {
+                          headers: { Authorization: `Bearer ${cookies['token']}` },
+                          timeout: 10 * 1000,
+                        }
+                      )
+                      .then((response) => {
+                        const newId = response.data.id; // Extract the ID from the response
+                        console.log("Post complete, new ID: " + newId);
+
+                        newData.id = newId
+                        newData.time = newData.time
+                        setData([...data, newData]);
+                        resolve();
+                      })
+                      .catch((error) => {
+                        if (error.code === "ECONNABORTED") {
+                          console.log("Time out");
+                        } else {
+                          console.log(error.response);
+                        }
+                        reject();
+                      });
+                  }, 1000); // Adjust the delay time (in milliseconds) as needed
+                })
+              ,
 
               onRowUpdate: (newData, oldData) =>
                 new Promise((resolve, reject) => {
                   setTimeout(() => {
-                    console.log()
-                    //const dataUpdate = [...data];
-                    //const index = oldData.tableData.id;
-                    //dataUpdate[index] = newData;
-                    //setData([...dataUpdate]); 
-                    resolve();
-                  }, 1000);
-                }),
-              onRowDelete: oldData =>
-                new Promise((resolve, reject) => {
-                  setTimeout(() => {
-                    //const dataDelete = [...data];
-                    //const index = oldData.tableData.id;
-                    //dataDelete.splice(index, 1);
-                    //setData([...dataDelete]);
-                    resolve();
-                  }, 1000);
+                    // Send a PUT request to update the data
+                    axios
+                      .put(`${url}/${newData.id}`, newData, {
+                        headers: { Authorization: `Bearer ${cookies['token']}` },
+                        timeout: 10 * 1000,
+                      })
+                      .then((response) => {
+                        console.log('complete update');
+
+                        // If the PUT request is successful, update the data state with the edited data
+                        const dataUpdate = [...data];
+                        const index = dataUpdate.findIndex((item) => item.id === newData.id);
+                        if (index !== -1) {
+                          dataUpdate[index] = newData;
+                          setData(dataUpdate);
+                        }
+
+                        resolve();
+                      })
+                      .catch((error) => {
+                        console.log(error.code);
+                        reject();
+                      });
+                  }, 1000); // Set your desired timeout here
                 })
 
-            }}
+              ,
+
+              onRowDelete: (oldData) =>
+                new Promise((resolve, reject) => {
+                  // Send a DELETE request to remove data
+                  console.log("try to delete: " + oldData.id);
+                  console.log('delete: ' + `${url}/${oldData.id}`);
+                  axios
+                    .delete(`${url}/${oldData.id}`, {
+                      headers: { Authorization: `Bearer ${cookies['token']}` },
+                      timeout: 1 * 1000,
+                    })
+                    .then((response) => {
+                      console.log('complete: ' + response.code);
+
+                      // If the DELETE request is successful, update the data state
+                      const dataDelete = [...data];
+                      const index = dataDelete.findIndex((item) => item.id === oldData.id);
+                      if (index !== -1) {
+                        dataDelete.splice(index, 1);
+                        setData(dataDelete);
+                      }
+
+                      resolve();
+                    })
+                    .catch((error) => {
+                      console.log(error.code);
+                      reject();
+                    });
+                })
+
+
+            }
+            }
           />
         </ThemeProvider>
       </div>
