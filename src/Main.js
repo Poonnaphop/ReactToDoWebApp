@@ -72,6 +72,7 @@ function Main() {
             value={dayjs(rowData.time)}
             onChange={(newTime) => handleDateTimeChange(rowData, newTime)}
             rowData={rowData}
+            readOnly
           />
         </LocalizationProvider>
       ),
@@ -146,6 +147,7 @@ function Main() {
               isDeleteHidden: rowData => rowData.name === 'y',
               onBulkUpdate: changes =>
                 new Promise((resolve, reject) => {
+                  console.log('on bulk')
                   setTimeout(() => {
                     axios.get(
                       url,
@@ -172,24 +174,29 @@ function Main() {
                 new Promise((resolve, reject) => {
                   // Simulate a delay with setTimeout
                   setTimeout(() => {
+                    // Format the time to ISO 8601 format
+                    const isoFormattedTime = dayjs(newData.time).format("YYYY-MM-DDTHH:mm:ss.SSS");
+                    console.log("time :" + isoFormattedTime)
+
                     // Send a POST request to add new data
                     axios.post(
-                        url,
-                        {
-                          name: newData.name,
-                          when: dayjs(newData.time),
-                        },
-                        {
-                          headers: { Authorization: `Bearer ${cookies['token']}` },
-                          timeout: 10 * 1000,
-                        }
-                      )
+                      url,
+                      {
+                        name: newData.name,
+                        when: isoFormattedTime,
+                      },
+                      {
+                        headers: { Authorization: `Bearer ${cookies['token']}` },
+                        timeout: 10 * 1000,
+                      }
+                    )
                       .then((response) => {
                         const newId = response.data.id; // Extract the ID from the response
                         console.log("Post complete, new ID: " + newId);
 
-                        newData.id = newId
-                        newData.time = newData.time
+                        // Update the data with the new ID and corrected time
+                        newData.id = newId;
+                        newData.time = isoFormattedTime; // Use the ISO 8601 formatted time
                         setData([...data, newData]);
                         resolve();
                       })
@@ -203,17 +210,23 @@ function Main() {
                       });
                   }, 1000); // Adjust the delay time (in milliseconds) as needed
                 })
+
               ,
 
               onRowUpdate: (newData, oldData) =>
                 new Promise((resolve, reject) => {
                   setTimeout(() => {
+                    // Format the time to ISO 8601 format
+                    const isoFormattedTime = dayjs(newData.time).format("YYYY-MM-DDTHH:mm:ss.SSS");
+
+                    // Create a copy of newData with the corrected time
+                    const updatedData = { ...newData, when: isoFormattedTime };
+
                     // Send a PUT request to update the data
-                    axios
-                      .put(`${url}/${newData.id}`, newData, {
-                        headers: { Authorization: `Bearer ${cookies['token']}` },
-                        timeout: 10 * 1000,
-                      })
+                    axios.put(`${url}/${newData.id}`, updatedData, {
+                      headers: { Authorization: `Bearer ${cookies['token']}` },
+                      timeout: 10 * 1000,
+                    })
                       .then((response) => {
                         console.log('complete update');
 
@@ -221,7 +234,7 @@ function Main() {
                         const dataUpdate = [...data];
                         const index = dataUpdate.findIndex((item) => item.id === newData.id);
                         if (index !== -1) {
-                          dataUpdate[index] = newData;
+                          dataUpdate[index] = updatedData; // Use the updated data with corrected time
                           setData(dataUpdate);
                         }
 
@@ -233,6 +246,7 @@ function Main() {
                       });
                   }, 1000); // Set your desired timeout here
                 })
+
 
               ,
 
