@@ -71,15 +71,16 @@ function Main() {
       field: "time",
       render: (rowData) => {
         // Convert the ISO 8601 time to a Thai-formatted string
-        const thaiFormattedTime = dayjs(rowData.time).format("D MMM YYYY เวลา HH:mm น.");
+        const thaiFormattedTime = dayjs(rowData.time).locale("th").format("D MMM YYYY เวลา HH:mm น.");
         return thaiFormattedTime;
       },
       editComponent: ({ value, onChange }) => (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateTimePicker
             label="new activity time"
-            value={dayjs(value)} // Ensure you are using the correct property
+            value={dayjs(value)}
             onChange={onChange}
+            format="D MMM YYYY เวลา HH:mm น."
           />
         </LocalizationProvider>
       ),
@@ -128,7 +129,7 @@ function Main() {
     }
     return parsedDate;
   }
-  
+
   useEffect(() => {
     console.log("cookies" + cookies['token']);
     console.log("use effect");
@@ -242,37 +243,49 @@ function Main() {
               ,
 
               onRowUpdate: (newData, oldData) =>
-                new Promise((resolve, reject) => {
-                  setTimeout(() => {
-                    // Format the time to ISO 8601 format
-                    const isoFormattedTime = dayjs(newData.time).format("YYYY-MM-DDTHH:mm:ss.SSS");
-
-                    // Create a copy of newData with the corrected time
-                    const updatedData = { ...newData, when: isoFormattedTime };
-
-                    // Send a PUT request to update the data
-                    axios.put(`${url}/${newData.id}`, updatedData, {
-                      headers: { Authorization: `Bearer ${cookies['token']}` },
-                      timeout: 10 * 1000,
+              new Promise((resolve, reject) => {
+                setTimeout(() => {
+                  // Store the current locale
+                  const currentLocale = dayjs.locale();
+            
+                  // Set the locale to 'th' for Thai
+                  dayjs.locale('th');
+            
+                  // Format the time to both ISO and Thai formats
+                  const isoFormattedTime = dayjs(newData.time).format("YYYY-MM-DDTHH:mm:ss.SSS");
+                  const thaiFormattedTime = dayjs(newData.time).format("D MMM YYYY เวลา HH:mm น.");
+            
+                  // Set the locale back to the original one
+                  dayjs.locale(currentLocale);
+            
+                  // Create a copy of newData with the corrected time
+                  const updatedData = { ...newData, when: isoFormattedTime };
+                  const updatedDataForDisplay = { ...newData, when: thaiFormattedTime };
+            
+                  // Send a PUT request to update the data
+                  axios.put(`${url}/${newData.id}`, updatedData, {
+                    headers: { Authorization: `Bearer ${cookies['token']}` },
+                    timeout: 10 * 1000,
+                  })
+                    .then((response) => {
+                      console.log('complete update');
+            
+                      // If the PUT request is successful, update the data state with the edited data
+                      const dataUpdate = [...data];
+                      const index = dataUpdate.findIndex((item) => item.id === newData.id);
+                      if (index !== -1) {
+                        dataUpdate[index] = updatedData; // Use the updated data with corrected time
+                        setData(dataUpdate);
+                      }
+                      resolve();
                     })
-                      .then((response) => {
-                        console.log('complete update');
-
-                        // If the PUT request is successful, update the data state with the edited data
-                        const dataUpdate = [...data];
-                        const index = dataUpdate.findIndex((item) => item.id === newData.id);
-                        if (index !== -1) {
-                          dataUpdate[index] = updatedData; // Use the updated data with corrected time
-                          setData(dataUpdate);
-                        }
-                        resolve();
-                      })
-                      .catch((error) => {
-                        console.log(error.code);
-                        reject();
-                      });
-                  }, 1000); // Set your desired timeout here
-                })
+                    .catch((error) => {
+                      console.log(error.code);
+                      reject();
+                    });
+                }, 1000); // Set your desired timeout here
+              })
+          
 
 
               ,
