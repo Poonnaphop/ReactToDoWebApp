@@ -32,8 +32,12 @@ import format from "date-fns/format";
 import parse from "date-fns/parse";
 import dayjs from 'dayjs';
 
+import 'dayjs/plugin/calendar'; // Import the calendar plugin
+import 'dayjs/locale/th';
 function Main() {
   const url = 'http://localhost:5101/activities'
+  dayjs.locale('th');
+
 
   const [activities, setActivities] = useState([]);
   const [newActivityText, setNewActivityText] = useState("");
@@ -65,17 +69,11 @@ function Main() {
     {
       title: "Time",
       field: "time",
-      render: (rowData) => (
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DateTimePicker
-            label="activity time"
-            value={dayjs(rowData.time)}
-            onChange={(newTime) => handleDateTimeChange(rowData, newTime)}
-            rowData={rowData}
-            readOnly
-          />
-        </LocalizationProvider>
-      ),
+      render: (rowData) => {
+        // Convert the ISO 8601 time to a Thai-formatted string
+        const thaiFormattedTime = dayjs(rowData.time).format("D MMM YYYY เวลา HH:mm น.");
+        return thaiFormattedTime;
+      },
       editComponent: ({ value, onChange }) => (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateTimePicker
