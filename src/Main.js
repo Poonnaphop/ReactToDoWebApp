@@ -107,25 +107,55 @@ function Main() {
     setData(updatedData);
   };
 
-
+  function parseDate(item) {
+    console.log("item: " + item);
+    let parsedDate;
+    try {
+      const [datePart, timePart] = item.split(' ');
+      const [day, month, year] = datePart.split('/'); // Adjust the format to match "day/month/year"
+      const [hour, minute, second] = timePart.split(':');
+      const isoFormattedTime = `${year}/${month}/${day} ${hour}:${minute}:${second}`;
+      console.log("iso " + isoFormattedTime);
+  
+      const customFormat = 'YY/MM/DD H:m:ss';
+  
+      // Create dayjs object from dateString parsing it using the provided format
+      parsedDate = dayjs(isoFormattedTime, customFormat);
+    } catch (e) {
+      console.error("Error parsing date:", e);
+      // Handle the error here, for example:
+      parsedDate = dayjs(); // Set to the current date if parsing fails
+    }
+    return parsedDate;
+  }
+  
   useEffect(() => {
-    console.log("cookies" + cookies['token'])
+    console.log("cookies" + cookies['token']);
+    console.log("use effect");
     axios.get(
       url,
       {
-        headers: { Authorization: `Bearer ${cookies['token']}` }
-        , timeout: 10 * 1000
+        headers: { Authorization: `Bearer ${cookies['token']}` },
+        timeout: 10 * 1000
       }
     ).then((response) => {
-      setData(response.data)
+      const parsedTimes = response.data.map((item) => {
+        const parsedTime = parseDate(item.time);
+        console.log("fixed time " + parsedTime);
+        return { ...item, time: parsedTime};
+      });
+      console.log(parsedTimes); // Check the parsed times
+      setData(parsedTimes); // Update the data state with the parsed times
     }).catch((error) => {
-      if (error.code === "ECONNABORTED") {
-        console.log("time out")
+      if (axios.isCancel(error)) {
+        console.log("Request was canceled:", error.message);
       } else {
-        console.log(error.response)
+        console.error("An error occurred:", error.message);
       }
-    })
-  }, [])
+    });
+  }, []);
+  
+  
 
   return (
     <div id='outer-container'>
@@ -235,7 +265,6 @@ function Main() {
                           dataUpdate[index] = updatedData; // Use the updated data with corrected time
                           setData(dataUpdate);
                         }
-
                         resolve();
                       })
                       .catch((error) => {
