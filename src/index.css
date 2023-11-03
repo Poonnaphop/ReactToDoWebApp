@@ -1,10 +1,17 @@
+@import url('http://fonts.googleapis.com/css?family=Kanit');
+@import url('http://fonts.googleapis.com/css?family=Sarabun');
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Sarabun','-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.table-header {
+  font-family: 'Kanit', sans-serif; /* Use the Kanit font */
 }
 
 code {

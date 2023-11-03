@@ -48,7 +48,7 @@ function SideBar(props) {
         <br/>
         <a id="credit" style={{color: 'rgb(184, 183, 173)', textDecoration: 'none'}} href="/credit">Credit</a><br/>
         <br/>
-        <a id="signout" style={{color: 'rgb(184, 183, 173)', textDecoration: 'none'}} href="/login">Sign Out</a><br/>
+        <a id="signout" style={{color: 'rgb(184, 183, 173)', textDecoration: 'none'}} href="/signout">Sign Out</a><br/>
         </Menu>
         )
     }

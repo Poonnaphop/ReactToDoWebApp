@@ -13,7 +13,11 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 function Copyright(props) {
     return (
@@ -36,21 +40,29 @@ export default function SignIn({ onSignIn }) {
 
     const handleIdChange = (event) => {
         setId(event.target.value);
-      };
-    
-      const handlePasswordChange = (event) => {
+    };
+
+    const handlePasswordChange = (event) => {
         setPassword(event.target.value);
-      };
+    };
 
 
     const handleSubmit = (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
-            // Call the onSignIn function with id and password
-            onSignIn(id, password);
+        // Call the onSignIn function with id and password
+        onSignIn(id, password);
     };
 
-    
+    const [showPassword, setShowPassword] = React.useState(false);
+
+    const handleClickShowPassword = () => setShowPassword((show) => !show);
+
+    const handleMouseDownPassword = (event) => {
+        event.preventDefault();
+    };
+
+
     return (
         <ThemeProvider theme={theme}>
             <Container component="main" maxWidth="xs">
@@ -82,18 +94,34 @@ export default function SignIn({ onSignIn }) {
                             value={id}
                             onChange={handleIdChange}
                         />
+
                         <TextField
                             margin="normal"
                             required
                             fullWidth
                             name="password"
                             label="Password"
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             id="password"
                             autoComplete="current-password"
-                            value={password} // Set the value of the input field
-                            onChange={handlePasswordChange} // Handle input changes
+                            value={password}
+                            onChange={handlePasswordChange}
+                            InputProps={{  // Use InputProps for endAdornment
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            aria-label="toggle password visibility"
+                                            onClick={handleClickShowPassword}
+                                            onMouseDown={handleMouseDownPassword}
+                                        >
+                                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                )
+                            }}
                         />
+
+
                         <FormControlLabel
                             control={<Checkbox value="remember" color="primary" />}
                             label="Remember me"

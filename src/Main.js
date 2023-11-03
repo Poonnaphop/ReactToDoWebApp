@@ -41,10 +41,13 @@ import CloseIcon from "@material-ui/icons/Close";
 import Button from "@material-ui/core/Button";
 import MuiAlert from '@mui/material/Alert';
 
+import { Navigate, useNavigate } from "react-router-dom";
+
 function Main() {
   const url = 'http://localhost:5101/activities'
   dayjs.locale('th');
 
+  let navigate = useNavigate()
 
   const [activities, setActivities] = useState([]);
   const [newActivityText, setNewActivityText] = useState("");
@@ -72,9 +75,9 @@ function Main() {
     ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
   }
   const [columns, setColumns] = useState([
-    { title: 'Name', field: 'name' },
+    { title: 'กิจกรรม', field: 'name' },
     {
-      title: "Time",
+      title: "วันเวลา",
       field: "time",
       render: (rowData) => {
         // Convert the ISO 8601 time to a Thai-formatted string
@@ -92,7 +95,7 @@ function Main() {
         </LocalizationProvider>
       ),
     },
-    { title: "ID", field: "id" }
+    { title: "ID", field: "id" , hidden: true}
   ]);
   const [data, setData] = useState([
     /*
@@ -124,9 +127,9 @@ function Main() {
       const [hour, minute, second] = timePart.split(':');
       const isoFormattedTime = `${year}/${month}/${day} ${hour}:${minute}:${second}`;
       console.log("iso " + isoFormattedTime);
-  
+
       const customFormat = 'YY/MM/DD H:m:ss';
-  
+
       // Create dayjs object from dateString parsing it using the provided format
       parsedDate = dayjs(isoFormattedTime, customFormat);
     } catch (e) {
@@ -138,6 +141,17 @@ function Main() {
   }
 
   useEffect(() => {
+    console.log("cookies['token'] != null :" + cookies['token'] != null)
+    console.log("cookies['token'] :" + cookies['token'])
+    if (cookies['token'] == undefined || !cookies['token']) {
+      SnackbarEvent('error', 'please Login');
+      setTimeout(() => {
+        navigate('/login');
+      },3000)
+      ;
+      return ; // You can also display a loading spinner or message here
+    }
+
     SnackbarEvent('info', 'load complete');
     console.log("cookies" + cookies['token']);
     console.log("use effect");
@@ -151,7 +165,7 @@ function Main() {
       const parsedTimes = response.data.map((item) => {
         const parsedTime = parseDate(item.time);
         console.log("fixed time " + parsedTime);
-        return { ...item, time: parsedTime};
+        return { ...item, time: parsedTime };
       });
       console.log(parsedTimes); // Check the parsed times
       setData(parsedTimes); // Update the data state with the parsed times
@@ -161,41 +175,50 @@ function Main() {
       } else {
         console.error("An error occurred:", error.message);
       }
+      console.log(error.code)
     });
   }, []);
 
   const [open, setOpen] = React.useState(false);
-    const handleClose = (event, reason) => {
-        if ("clickaway" == reason) return;
-        setOpen(false);
-    };
-    const Alert = React.forwardRef(function Alert(props, ref) {
-        return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-    });
-    const SnackbarEvent = (severity, text) => {
-        setOpen(true);
-        setSnackbarData({ severity, text });
-    };
+  const handleClose = (event, reason) => {
+    if ("clickaway" == reason) return;
+    setOpen(false);
+  };
+  const Alert = React.forwardRef(function Alert(props, ref) {
+    return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+  });
+  const SnackbarEvent = (severity, text) => {
+    setOpen(true);
+    setSnackbarData({ severity, text });
+  };
 
-    const [snackbarData, setSnackbarData] = React.useState({
-        severity: 'success',
-        text: 'This is a success message!',
-    });
+  const [snackbarData, setSnackbarData] = React.useState({
+    severity: 'success',
+    text: 'This is a success message!',
+  });
 
-  
-  
+  const tableOptions = {
+    headerStyle: {
+      
+      color: '#333', // Specify your text color
+      // Add your custom CSS class for the Kanit font
+      fontFamily: "'Kanit', sans-serif", // Use the Kanit font
+    },
+  };
+
 
   return (
     <div id='outer-container'>
 
       <SideBar pageWrapId={'page-wrap'} outerContainerId={'outer-container'} />
-      <div id='page-wrap' style={{ width: '80%', height: '100%' }}>
+      <div id='page-wrap' style={{ width: '90%', height: '100%' }}>
         <ThemeProvider theme={defaultMaterialTheme}>
           <MaterialTable
             icons={tableIcons}
             title="Test Table"
             columns={columns}
             data={data}
+            options={tableOptions}
             editable={{
               //isEditable: rowData => rowData.name === 'Mehmet', // only name(a) rows would be editable
               isEditHidden: rowData => rowData.name === 'x',
@@ -223,8 +246,11 @@ function Main() {
                     resolve();
                   }, 1000);
                 }),
-              onRowAddCancelled: rowData => console.log('Row adding cancelled'),
-              onRowUpdateCancelled: rowData => console.log('Row editing cancelled'),
+              onRowAddCancelled: rowData => { console.log('Row adding cancelled') },
+              onRowUpdateCancelled: rowData => {
+                SnackbarEvent('warning', 'cancel update');
+                console.log('Row editing cancelled')
+              },
 
               onRowAdd: (newData) =>
                 new Promise((resolve, reject) => {
@@ -249,6 +275,7 @@ function Main() {
                       .then((response) => {
                         const newId = response.data.id; // Extract the ID from the response
                         console.log("Post complete, new ID: " + newId);
+                        SnackbarEvent('success', 'row add complete');
 
                         // Update the data with the new ID and corrected time
                         newData.id = newId;
@@ -257,6 +284,7 @@ function Main() {
                         resolve();
                       })
                       .catch((error) => {
+                        SnackbarEvent('error', 'row add failed');
                         if (error.code === "ECONNABORTED") {
                           console.log("Time out");
                         } else {
@@ -270,49 +298,51 @@ function Main() {
               ,
 
               onRowUpdate: (newData, oldData) =>
-              new Promise((resolve, reject) => {
-                setTimeout(() => {
-                  // Store the current locale
-                  const currentLocale = dayjs.locale();
-            
-                  // Set the locale to 'th' for Thai
-                  dayjs.locale('th');
-            
-                  // Format the time to both ISO and Thai formats
-                  const isoFormattedTime = dayjs(newData.time).format("YYYY-MM-DDTHH:mm:ss.SSS");
-                  const thaiFormattedTime = dayjs(newData.time).format("D MMM YYYY เวลา HH:mm น.");
-            
-                  // Set the locale back to the original one
-                  dayjs.locale(currentLocale);
-            
-                  // Create a copy of newData with the corrected time
-                  const updatedData = { ...newData, when: isoFormattedTime };
-                  const updatedDataForDisplay = { ...newData, when: thaiFormattedTime };
-            
-                  // Send a PUT request to update the data
-                  axios.put(`${url}/${newData.id}`, updatedData, {
-                    headers: { Authorization: `Bearer ${cookies['token']}` },
-                    timeout: 10 * 1000,
-                  })
-                    .then((response) => {
-                      console.log('complete update');
-            
-                      // If the PUT request is successful, update the data state with the edited data
-                      const dataUpdate = [...data];
-                      const index = dataUpdate.findIndex((item) => item.id === newData.id);
-                      if (index !== -1) {
-                        dataUpdate[index] = updatedData; // Use the updated data with corrected time
-                        setData(dataUpdate);
-                      }
-                      resolve();
+                new Promise((resolve, reject) => {
+                  setTimeout(() => {
+                    // Store the current locale
+                    const currentLocale = dayjs.locale();
+
+                    // Set the locale to 'th' for Thai
+                    dayjs.locale('th');
+
+                    // Format the time to both ISO and Thai formats
+                    const isoFormattedTime = dayjs(newData.time).format("YYYY-MM-DDTHH:mm:ss.SSS");
+                    const thaiFormattedTime = dayjs(newData.time).format("D MMM YYYY เวลา HH:mm น.");
+
+                    // Set the locale back to the original one
+                    dayjs.locale(currentLocale);
+
+                    // Create a copy of newData with the corrected time
+                    const updatedData = { ...newData, when: isoFormattedTime };
+                    const updatedDataForDisplay = { ...newData, when: thaiFormattedTime };
+
+                    // Send a PUT request to update the data
+                    axios.put(`${url}/${newData.id}`, updatedData, {
+                      headers: { Authorization: `Bearer ${cookies['token']}` },
+                      timeout: 10 * 1000,
                     })
-                    .catch((error) => {
-                      console.log(error.code);
-                      reject();
-                    });
-                }, 1000); // Set your desired timeout here
-              })
-          
+                      .then((response) => {
+                        console.log('complete update');
+                        SnackbarEvent('success', 'row edit complete');
+
+                        // If the PUT request is successful, update the data state with the edited data
+                        const dataUpdate = [...data];
+                        const index = dataUpdate.findIndex((item) => item.id === newData.id);
+                        if (index !== -1) {
+                          dataUpdate[index] = updatedData; // Use the updated data with corrected time
+                          setData(dataUpdate);
+                        }
+                        resolve();
+                      })
+                      .catch((error) => {
+                        SnackbarEvent('error', 'row edit failed');
+                        console.log(error.code);
+                        reject();
+                      });
+                  }, 1000); // Set your desired timeout here
+                })
+
 
 
               ,
@@ -329,6 +359,7 @@ function Main() {
                     })
                     .then((response) => {
                       console.log('complete: ' + response.code);
+                      SnackbarEvent('success', 'row delete complete');
 
                       // If the DELETE request is successful, update the data state
                       const dataDelete = [...data];
@@ -341,6 +372,7 @@ function Main() {
                       resolve();
                     })
                     .catch((error) => {
+                      SnackbarEvent('error', 'row delete failed');
                       console.log(error.code);
                       reject();
                     });
@@ -352,10 +384,10 @@ function Main() {
           />
         </ThemeProvider>
         <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
-                <Alert onClose={handleClose} severity={snackbarData.severity} sx={{ width: '100%' }}>
-                    {snackbarData.text}
-                </Alert>
-            </Snackbar>
+          <Alert onClose={handleClose} severity={snackbarData.severity} sx={{ width: '100%' }}>
+            {snackbarData.text}
+          </Alert>
+        </Snackbar>
       </div>
 
     </div>
