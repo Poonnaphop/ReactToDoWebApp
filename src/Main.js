@@ -34,6 +34,13 @@ import dayjs from 'dayjs';
 
 import 'dayjs/plugin/calendar'; // Import the calendar plugin
 import 'dayjs/locale/th';
+
+import IconButton from "@material-ui/core/IconButton";
+import Snackbar from "@material-ui/core/Snackbar";
+import CloseIcon from "@material-ui/icons/Close";
+import Button from "@material-ui/core/Button";
+import MuiAlert from '@mui/material/Alert';
+
 function Main() {
   const url = 'http://localhost:5101/activities'
   dayjs.locale('th');
@@ -131,6 +138,7 @@ function Main() {
   }
 
   useEffect(() => {
+    SnackbarEvent('info', 'load complete');
     console.log("cookies" + cookies['token']);
     console.log("use effect");
     axios.get(
@@ -155,6 +163,25 @@ function Main() {
       }
     });
   }, []);
+
+  const [open, setOpen] = React.useState(false);
+    const handleClose = (event, reason) => {
+        if ("clickaway" == reason) return;
+        setOpen(false);
+    };
+    const Alert = React.forwardRef(function Alert(props, ref) {
+        return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+    });
+    const SnackbarEvent = (severity, text) => {
+        setOpen(true);
+        setSnackbarData({ severity, text });
+    };
+
+    const [snackbarData, setSnackbarData] = React.useState({
+        severity: 'success',
+        text: 'This is a success message!',
+    });
+
   
   
 
@@ -324,6 +351,11 @@ function Main() {
             }
           />
         </ThemeProvider>
+        <Snackbar open={open} autoHideDuration={3000} onClose={handleClose}>
+                <Alert onClose={handleClose} severity={snackbarData.severity} sx={{ width: '100%' }}>
+                    {snackbarData.text}
+                </Alert>
+            </Snackbar>
       </div>
 
     </div>
