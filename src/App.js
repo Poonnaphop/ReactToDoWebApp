@@ -5,6 +5,7 @@ import Credit from './Credit';
 import Main from './Main';
 import SignOut from './SignOut.js';
 import Register from './Register.js';
+import Forget from './ForgetPassword.js';
 import { Route,Routes } from 'react-router-dom';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
     <Route path='/credit' element={<Credit/>} />
     <Route path='/signout' element={<SignOut/>}/>
     <Route path='/signup' element={<Register/>}/>
+    <Route path='/forgetPassword' element={<Forget/>}/>
   </Routes>
   )
 }
