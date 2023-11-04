@@ -129,7 +129,13 @@ export default function SignUp({onSignUp}) {
                         >
                             Sign Up
                         </Button>
-
+                        <Grid container> 
+                            <Grid item>
+                                <Link href="/login" variant="body2">
+                                    {"Have an account? Sign In"}
+                                </Link>
+                            </Grid>
+                        </Grid>
                     </Box>
                 </Box>
                 <Copyright sx={{ mt: 8, mb: 4 }} />

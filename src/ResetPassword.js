@@ -129,6 +129,13 @@ export default function ResetPassword({onResetPassword}) {
                         >
                             Reset Password
                         </Button>
+                        <Grid container> 
+                            <Grid item>
+                                <Link href="/login" variant="body2">
+                                    {"Remember password? Sign In"}
+                                </Link>
+                            </Grid>
+                        </Grid>
 
                     </Box>
                 </Box>
