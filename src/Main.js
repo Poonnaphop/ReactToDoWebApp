@@ -21,24 +21,18 @@ import Search from '@material-ui/icons/Search'
 import ViewColumn from '@material-ui/icons/ViewColumn'
 
 import axios from "axios";
-import { Http } from "@material-ui/icons";
 import { useCookies } from 'react-cookie';
 
-import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import format from "date-fns/format";
-import parse from "date-fns/parse";
+
 import dayjs from 'dayjs';
 
 import 'dayjs/plugin/calendar'; // Import the calendar plugin
 import 'dayjs/locale/th';
 
-import IconButton from "@material-ui/core/IconButton";
 import Snackbar from "@material-ui/core/Snackbar";
-import CloseIcon from "@material-ui/icons/Close";
-import Button from "@material-ui/core/Button";
 import MuiAlert from '@mui/material/Alert';
 
 import { Navigate, useNavigate } from "react-router-dom";
@@ -141,9 +135,9 @@ function Main() {
   }
 
   useEffect(() => {
-    console.log("cookies['token'] != null :" + cookies['token'] != null)
-    console.log("cookies['token'] :" + cookies['token'])
-    if (cookies['token'] == undefined || !cookies['token']) {
+    console.log("cookies['token'] != null : " + cookies['token'] != null)
+    console.log("cookies['token'] : " + cookies['token'])
+    if (cookies['token'] == undefined || cookies['token']  == 'undefined') {
       SnackbarEvent('error', 'please Login');
       setTimeout(() => {
         navigate('/login');

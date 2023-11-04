@@ -34,7 +34,7 @@ function Copyright(props) {
 
 const theme = createTheme();
 
-export default function SignIn({ onSignIn }) {
+export default function SignUp({onSignUp}) {
     const [id, setId] = useState('');
     const [password, setPassword] = useState('');
 
@@ -51,7 +51,7 @@ export default function SignIn({ onSignIn }) {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         // Call the onSignIn function with id and password
-        onSignIn(id, password);
+        onSignUp(id, password);
     };
 
     const [showPassword, setShowPassword] = React.useState(false);
@@ -79,7 +79,7 @@ export default function SignIn({ onSignIn }) {
                         <LockOutlinedIcon />
                     </Avatar>
                     <Typography component="h1" variant="h5">
-                        Sign in
+                        Sign up
                     </Typography>
                     <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
                         <TextField
@@ -121,31 +121,15 @@ export default function SignIn({ onSignIn }) {
                             }}
                         />
 
-
-                        <FormControlLabel
-                            control={<Checkbox value="remember" color="primary" />}
-                            label="Remember me"
-                        />
                         <Button
                             type="submit"
                             fullWidth
                             variant="contained"
                             sx={{ mt: 3, mb: 2 }}
                         >
-                            Sign In
+                            Sign Up
                         </Button>
-                        <Grid container>
-                            <Grid item xs>
-                                <Link href="#" variant="body2">
-                                    Forgot password?
-                                </Link>
-                            </Grid>
-                            <Grid item>
-                                <Link href="/SignUp" variant="body2">
-                                    {"Don't have an account? Sign Up"}
-                                </Link>
-                            </Grid>
-                        </Grid>
+
                     </Box>
                 </Box>
                 <Copyright sx={{ mt: 8, mb: 4 }} />
